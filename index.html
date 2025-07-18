@@ -94,7 +94,20 @@
         html: `
       <input type="text" id="nombre" class="swal2-input" placeholder="Nombre del evento">
       <input type="date" id="fecha" class="swal2-input">
-      <input type="color" id="color" class="swal2-input" style="height: 3em;">
+      <div style="text-align: left; margin: 1em 0; margin-bottom:0px">
+        <input 
+          type="color" 
+          id="color" 
+          style="
+            width: 100%; 
+            height: 40px; 
+            border: none; 
+            padding: 0; 
+            background: none;
+            cursor: pointer;
+          "
+        >
+      </div>
     `,
         confirmButtonText: 'Guardar',
         focusConfirm: false,
