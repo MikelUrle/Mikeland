@@ -6,8 +6,7 @@
   <title>Mikeland</title>
   <link rel="stylesheet" href="./styles/menu.css">
   <link rel="stylesheet" href="./styles/index.css">
-    <link rel="stylesheet" href="./styles/finanzas.css">
-  <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/main.min.css" rel="stylesheet" />
+  <link rel="stylesheet" href="./styles/finanzas.css">
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11" defer></script>
   <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js" defer></script>
   <script src="https://unpkg.com/lucide@latest"></script>
@@ -20,53 +19,54 @@
 
   <div id="sidebar"></div>
 
-<div class="main">
-  <h1>Finanzas</h1>
+  <div class="main">
+    <h1>Finanzas</h1>
 
-  <section id="patrimonio">
-    <h2>Patrimonio Total</h2>
-    <div id="patrimonio-total">0 €</div>
-  </section>
+    <section id="patrimonio">
+      <h2>Patrimonio Total</h2>
+      <div id="patrimonio-total">0 €</div>
+    </section>
 
-  <section class="categorias-container">
-    <div class="categoria">
-      <h3>Banco</h3>
-      <ul id="lista-banco"></ul>
-    </div>
+    <section class="categorias-container">
+      <div class="categoria">
+        <h3>Banco</h3>
+        <ul id="lista-banco"></ul>
+      </div>
 
-    <div class="categoria">
-      <h3>Bolsa</h3>
-      <ul id="lista-bolsa"></ul>
-    </div>
+      <div class="categoria">
+        <h3>Bolsa</h3>
+        <ul id="lista-bolsa"></ul>
+      </div>
 
-    <div class="categoria">
-      <h3>Extras</h3>
-      <ul id="lista-extras"></ul>
-    </div>
-  </section>
+      <div class="categoria">
+        <h3>Extras</h3>
+        <ul id="lista-extras"></ul>
+      </div>
+    </section>
 
-<section id="acciones">
-  <button id="btn-add">+ Añadir Movimiento</button>
-</section>
+    <section id="acciones">
+      <button id="btn-add" onclick="nuevoMovimiento(event)">+ Añadir Movimiento</button>
+    </section>
 
-<section id="historial">
-  <h3>Historial de Movimientos</h3>
-  <table>
-    <thead>
-      <tr>
-        <th>Fecha</th>
-        <th>Categoría</th>
-        <th>Concepto</th>
-        <th>Cantidad (€)</th>
-      </tr>
-    </thead>
-    <tbody id="tabla-movimientos">
-      <!-- Aquí se insertarán los movimientos -->
-    </tbody>
-  </table>
-</section>
+    <section id="historial">
+      <h3>Historial de Movimientos</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Fecha</th>
+            <th>Categoría</th>
+            <th>Concepto</th>
+            <th>Sub Categoria</th>
+            <th>Cantidad (€)</th>
+          </tr>
+        </thead>
+        <tbody id="tabla-movimientos">
+          <!-- Aquí se insertarán los movimientos -->
+        </tbody>
+      </table>
+    </section>
 
-</div>
+  </div>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js"
     integrity="sha384-ndDqU0Gzau9qJ1lfW4pNLlhNTkCfHzAVBReH9diLvGRem5+R9g2FzA8ZGN954O5Q"
@@ -81,97 +81,195 @@
         });
     });
 
-const finanzas = {
-  banco: [
-    { nombre: 'Cuenta corriente', cantidad: 1200 },
-    { nombre: 'Cuenta ahorro', cantidad: 3500 }
-  ],
-  bolsa: [
-    { nombre: 'ETF S&P500', cantidad: 2000 },
-    { nombre: 'Bono bajo riesgo', cantidad: 5000 }
-  ],
-  extras: [
-    { nombre: 'Efectivo en mano', cantidad: 300 },
-    { nombre: 'Prestado a amigo', cantidad: 100 }
-  ]
-};
+    const finanzas = {
+      banco: [
+        { nombre: 'Cuenta corriente', cantidad: 1200 },
+        { nombre: 'Cuenta ahorro', cantidad: 3500 }
+      ],
+      bolsa: [
+        { nombre: 'ETF S&P500', cantidad: 2000 },
+        { nombre: 'Bono bajo riesgo', cantidad: 5000 }
+      ],
+      extras: [
+        { nombre: 'Efectivo en mano', cantidad: 300 },
+        { nombre: 'Prestado a amigo', cantidad: 100 }
+      ]
+    };
 
-const movimientos = [
-  { fecha: '2025-07-01', categoria: 'Banco', concepto: 'Ingreso nómina', cantidad: 1800 },
-  { fecha: '2025-07-05', categoria: 'Bolsa', concepto: 'Compra ETF', cantidad: -500 }
-];
+    const movimientos = [];
+    const subCategorias = [];
 
-function renderFinanzas() {
-  let total = 0;
+    function renderFinanzas() {
+      let total = 0;
 
-  for (const categoria in finanzas) {
-    const lista = document.getElementById(`lista-${categoria}`);
-    lista.innerHTML = '';
+      for (const categoria in finanzas) {
+        const lista = document.getElementById(`lista-${categoria}`);
+        lista.innerHTML = '';
 
-    finanzas[categoria].forEach(item => {
-      total += item.cantidad;
-      const li = document.createElement('li');
-      li.textContent = `${item.nombre}: ${item.cantidad.toLocaleString()} €`;
-      lista.appendChild(li);
+        finanzas[categoria].forEach(item => {
+          total += item.cantidad;
+          const li = document.createElement('li');
+          li.textContent = `${item.nombre}: ${item.cantidad.toLocaleString()} €`;
+          lista.appendChild(li);
+        });
+      }
+
+      document.getElementById('patrimonio-total').textContent = total.toLocaleString() + ' €';
+    }
+
+function initMovimientos() {
+  fetch('./controllers/movimientos.php')
+    .then(response => response.json())
+    .then(data => {
+      movimientos.length = 0;
+      data.forEach(item => {
+        movimientos.push({
+          id: item.id,
+          fecha:item.fecha,
+          categoria: item.categoria,
+          concepto: item.concepto,
+          cantidad: item.cantidad,
+          sub_categoria: item.nombre_sub_categoria
+        });
+      });
+      renderMovimientos();
+    })
+    .catch(error => {
+      console.error('Error al cargar los movimientos:', error);
     });
-  }
+}
 
-  document.getElementById('patrimonio-total').textContent = total.toLocaleString() + ' €';
+function initSubcategorias() {
+  fetch('./controllers/sub_categorias.php')
+    .then(response => response.json())
+    .then(data => {
+      subCategorias.length = 0;
+      data.forEach(item => {
+        subCategorias.push({
+          id: item.id,
+          nombre:item.nombre
+        });
+      });
+
+    })
+    .catch(error => {
+      console.error('Error al cargar los movimientos:', error);
+    });
 }
 
 function renderMovimientos() {
+
   const tbody = document.getElementById('tabla-movimientos');
   tbody.innerHTML = '';
+
+  const categorias = {
+    0: 'Banco',
+    1: 'Bolsa',
+    2: 'Extras'
+  };
 
   movimientos.forEach(mov => {
     const tr = document.createElement('tr');
     tr.innerHTML = `
       <td>${mov.fecha}</td>
-      <td>${mov.categoria}</td>
+      <td>${categorias[mov.categoria] || 'Desconocida'}</td>
       <td>${mov.concepto}</td>
+      <td>${mov.sub_categoria || '-'}</td>
       <td style="color: ${mov.cantidad < 0 ? 'red' : 'green'}">
-        ${mov.cantidad.toLocaleString()} €
+        ${Number(mov.cantidad).toLocaleString()} €
       </td>
     `;
     tbody.appendChild(tr);
   });
 }
 
+
 document.addEventListener('DOMContentLoaded', () => {
   renderFinanzas();
-  renderMovimientos();
+  initMovimientos(); // 👈 Se usa esta
+  initSubcategorias();
 
-  document.getElementById('btn-add').addEventListener('click', () => {
-    Swal.fire({
-      title: 'Nuevo Movimiento',
-      html: `
-        <input type="date" id="fecha" class="swal2-input">
-        <select id="categoria" class="swal2-input">
-          <option value="Banco">Banco</option>
-          <option value="Bolsa">Bolsa</option>
-          <option value="Extras">Extras</option>
-        </select>
-        <input type="text" id="concepto" class="swal2-input" placeholder="Concepto">
-        <input type="number" id="cantidad" class="swal2-input" placeholder="Cantidad €">
-      `,
-      focusConfirm: false,
-      preConfirm: () => {
-        const fecha = document.getElementById('fecha').value;
-        const categoria = document.getElementById('categoria').value;
-        const concepto = document.getElementById('concepto').value;
-        const cantidad = parseFloat(document.getElementById('cantidad').value);
-
-        if (!fecha || !categoria || !concepto || isNaN(cantidad)) {
-          Swal.showValidationMessage('Por favor completa todos los campos');
-          return;
-        }
-
-        movimientos.push({ fecha, categoria, concepto, cantidad });
-        renderMovimientos();
-      }
-    });
-  });
 });
+
+
+function nuevoMovimiento() {
+  const subCategoriaOptions = subCategorias.map(sub => `
+    <option value="${sub.id}">${sub.nombre}</option>
+  `).join('');
+
+  Swal.fire({
+    title: 'Nuevo Movimiento',
+    html: `
+      <div style="display: flex; flex-direction: column; align-items: stretch; width: 100%; max-width: 500px; margin: auto; font-size: 16px;">
+        <label for="fecha" style="margin-top: 10px;">📅 Fecha</label>
+        <input type="date" id="fecha" class="swal2-input" style="width: 100%; height: 45px; font-size: 16px; margin-left:0px">
+
+        <label for="categoria" style="margin-top: 10px; margin-bottom:10px">📂 Categoría</label>
+        <select id="categoria" class="swal2-input" style="width: 100%; height: 45px; font-size: 16px;">
+          <option value="0">Banco</option>
+          <option value="1">Bolsa</option>
+          <option value="2">Extras</option>
+        </select>
+
+        <label for="sub_categoria" style="margin-top: 10px; margin-bottom:10px">🏷️ Subcategoría</label>
+        <select id="sub_categoria" class="swal2-input" style="width: 100%; height: 45px; font-size: 16px;">
+          <option value="">-- Selecciona una subcategoría --</option>
+          ${subCategoriaOptions}
+        </select>
+
+        <label for="concepto" style="margin-top: 10px;">📝 Concepto</label>
+        <input type="text" id="concepto" class="swal2-input" placeholder="Descripción" style="width: 100%; height: 45px; font-size: 16px; margin-left:0px">
+
+        <label for="cantidad" style="margin-top: 10px;">💶 Cantidad (€)</label>
+        <input type="number" id="cantidad" class="swal2-input" placeholder="Ej: 200" style="width: 100%; height: 45px; font-size: 16px; margin-left:0px">
+      </div>
+    `,
+    confirmButtonText: '💾 Guardar',
+    customClass: {
+      popup: 'swal2-modal-centered'
+    },
+    focusConfirm: false,
+    preConfirm: () => {
+      const fecha = document.getElementById('fecha').value;
+      const categoria = document.getElementById('categoria').value;
+      const concepto = document.getElementById('concepto').value;
+      const cantidad = parseFloat(document.getElementById('cantidad').value);
+      const sub_categoria = document.getElementById('sub_categoria').value;
+
+      if (!fecha || !concepto || isNaN(cantidad) || !sub_categoria) {
+        Swal.showValidationMessage('Todos los campos son obligatorios');
+        return false;
+      }
+
+      return { fecha, categoria, concepto, cantidad, sub_categoria };
+    }
+  }).then(result => {
+    if (result.isConfirmed) {
+      const data = result.value;
+
+      fetch('./controllers/crear_movimiento.php', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(data)
+      })
+        .then(res => res.json())
+        .then(() => {
+          initMovimientos();
+          Swal.fire('✅ Éxito', 'Movimiento creado correctamente', 'success');
+        })
+        .catch(err => {
+          console.error(err);
+          Swal.fire('❌ Error', 'No se pudo crear el movimiento', 'error');
+        });
+    }
+  });
+}
+
+
+
+
 
 
 
