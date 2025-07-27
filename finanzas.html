@@ -45,6 +45,7 @@
     </section>
 
     <section id="acciones">
+      <button id="btn-add-subcategoria" onclick="nuevaSubCategoria(event)">+ Añadir Subcategoria</button>
       <button id="btn-add" onclick="nuevoMovimiento(event)">+ Añadir Movimiento</button>
     </section>
 
@@ -81,58 +82,96 @@
         });
     });
 
-    const finanzas = {
-      banco: [
-        { nombre: 'Cuenta corriente', cantidad: 1200 },
-        { nombre: 'Cuenta ahorro', cantidad: 3500 }
-      ],
-      bolsa: [
-        { nombre: 'ETF S&P500', cantidad: 2000 },
-        { nombre: 'Bono bajo riesgo', cantidad: 5000 }
-      ],
-      extras: [
-        { nombre: 'Efectivo en mano', cantidad: 300 },
-        { nombre: 'Prestado a amigo', cantidad: 100 }
-      ]
-    };
+let finanzas = {
+  banco: [],
+  bolsa: [],
+  extras: []
+};
 
-    const movimientos = [];
-    const subCategorias = [];
+const movimientos = [];
+const subCategorias = [];
 
-    function renderFinanzas() {
-      let total = 0;
+function procesarMovimientos(movimientos) {
+  const nuevoFinanzas = {
+    banco: [],
+    bolsa: [],
+    extras: []
+  };
 
-      for (const categoria in finanzas) {
-        const lista = document.getElementById(`lista-${categoria}`);
-        lista.innerHTML = '';
+  const categoriasMap = {
+    0: 'banco',
+    1: 'bolsa',
+    2: 'extras'
+  };
 
-        finanzas[categoria].forEach(item => {
-          total += item.cantidad;
-          const li = document.createElement('li');
-          li.textContent = `${item.nombre}: ${item.cantidad.toLocaleString()} €`;
-          lista.appendChild(li);
-        });
-      }
+  const acumulado = {};
 
-      document.getElementById('patrimonio-total').textContent = total.toLocaleString() + ' €';
+  movimientos.forEach(mov => {
+    const cat = parseInt(mov.categoria);
+    const nombre = mov.nombre_sub_categoria;
+    const cantidad = parseFloat(mov.cantidad);
+
+    if (!categoriasMap.hasOwnProperty(cat) || mov.isDeleted === '1') return;
+
+    const key = `${cat}_${nombre}`;
+
+    if (!acumulado[key]) {
+      acumulado[key] = {
+        categoria: categoriasMap[cat],
+        nombre,
+        cantidad: 0
+      };
     }
 
+    acumulado[key].cantidad += cantidad;
+  });
+
+  Object.values(acumulado).forEach(({ categoria, nombre, cantidad }) => {
+    nuevoFinanzas[categoria].push({ nombre, cantidad });
+  });
+
+  return nuevoFinanzas;
+}
+
+function renderFinanzas() {
+  let total = 0;
+
+  for (const categoria in finanzas) {
+    const lista = document.getElementById(`lista-${categoria}`);
+    lista.innerHTML = '';
+
+    finanzas[categoria].forEach(item => {
+      total += item.cantidad;
+      const li = document.createElement('li');
+      li.textContent = `${item.nombre}: ${item.cantidad.toLocaleString()} €`;
+      lista.appendChild(li);
+    });
+  }
+
+  document.getElementById('patrimonio-total').textContent = total.toLocaleString() + ' €';
+}
+
 function initMovimientos() {
-  fetch('./controllers/movimientos.php')
+  return fetch('./controllers/movimientos.php')
     .then(response => response.json())
     .then(data => {
       movimientos.length = 0;
       data.forEach(item => {
         movimientos.push({
           id: item.id,
-          fecha:item.fecha,
+          fecha: item.fecha,
           categoria: item.categoria,
           concepto: item.concepto,
           cantidad: item.cantidad,
-          sub_categoria: item.nombre_sub_categoria
+          nombre_sub_categoria: item.nombre_sub_categoria, // este campo es necesario
+          isDeleted: item.isDeleted // asegúrate de incluirlo
         });
       });
       renderMovimientos();
+
+      // ✅ Ahora sí: procesamos finanzas y renderizamos
+      finanzas = procesarMovimientos(movimientos);
+      renderFinanzas();
     })
     .catch(error => {
       console.error('Error al cargar los movimientos:', error);
@@ -140,25 +179,23 @@ function initMovimientos() {
 }
 
 function initSubcategorias() {
-  fetch('./controllers/sub_categorias.php')
+  return fetch('./controllers/sub_categorias.php')
     .then(response => response.json())
     .then(data => {
       subCategorias.length = 0;
       data.forEach(item => {
         subCategorias.push({
           id: item.id,
-          nombre:item.nombre
+          nombre: item.nombre
         });
       });
-
     })
     .catch(error => {
-      console.error('Error al cargar los movimientos:', error);
+      console.error('Error al cargar las subcategorías:', error);
     });
 }
 
 function renderMovimientos() {
-
   const tbody = document.getElementById('tabla-movimientos');
   tbody.innerHTML = '';
 
@@ -174,7 +211,7 @@ function renderMovimientos() {
       <td>${mov.fecha}</td>
       <td>${categorias[mov.categoria] || 'Desconocida'}</td>
       <td>${mov.concepto}</td>
-      <td>${mov.sub_categoria || '-'}</td>
+      <td>${mov.nombre_sub_categoria || '-'}</td>
       <td style="color: ${mov.cantidad < 0 ? 'red' : 'green'}">
         ${Number(mov.cantidad).toLocaleString()} €
       </td>
@@ -183,12 +220,9 @@ function renderMovimientos() {
   });
 }
 
-
-document.addEventListener('DOMContentLoaded', () => {
-  renderFinanzas();
-  initMovimientos(); // 👈 Se usa esta
-  initSubcategorias();
-
+document.addEventListener('DOMContentLoaded', async () => {
+  await initSubcategorias();
+  await initMovimientos();
 });
 
 
@@ -268,7 +302,57 @@ function nuevoMovimiento() {
 }
 
 
+function nuevaSubCategoria() {
 
+  Swal.fire({
+    title: 'Nueva Subcategoria',
+    html: `
+      <div style="display: flex; flex-direction: column; align-items: stretch; width: 100%; max-width: 500px; margin: auto; font-size: 16px;">
+
+        <label for="nombreSubcategoria" style="margin-top: 10px;">📝 Nombre</label>
+        <input type="text" id="nombreSubcategoria" class="swal2-input" placeholder="Nombre" style="width: 100%; height: 45px; font-size: 16px; margin-left:0px">
+
+      </div>
+    `,
+    confirmButtonText: '💾 Guardar',
+    customClass: {
+      popup: 'swal2-modal-centered'
+    },
+    focusConfirm: false,
+    preConfirm: () => {
+      const nombreSubcategoria = document.getElementById('nombreSubcategoria').value;
+
+      if (!nombreSubcategoria) {
+        Swal.showValidationMessage('Todos los campos son obligatorios');
+        return false;
+      }
+
+      return { nombreSubcategoria };
+    }
+  }).then(result => {
+    if (result.isConfirmed) {
+      const data = result.value;
+
+      fetch('./controllers/crear_subcategoria.php', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(data)
+      })
+        .then(res => res.json())
+        .then(() => {
+
+          window.location.reload();
+
+        })
+        .catch(err => {
+          console.error(err);
+          Swal.fire('❌ Error', 'No se pudo crear la Subcategoria', 'error');
+        });
+    }
+  });
+}
 
 
 

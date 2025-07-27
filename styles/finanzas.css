@@ -56,15 +56,29 @@
 }
 
 #acciones {
-  margin: 50px 0 20px;
-  text-align: center;
-  margin-left: 1200px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px; /* espacio entre botones */
+  max-width: 900px;
+  margin: 30px auto 30px;
+  padding-right: 10px;
+  margin-left:1000px;
 }
 
 #btn-add {
   padding: 10px 20px;
   font-size: 1em;
   background-color: #27ae60;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+#btn-add-subcategoria {
+  padding: 10px 20px;
+  font-size: 1em;
+  background-color: #a42aaf;
   color: white;
   border: none;
   border-radius: 5px;
