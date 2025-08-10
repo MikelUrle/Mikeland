@@ -1,7 +1,12 @@
 .main {
   padding: 30px;
   padding-left: 40px;
-  width: 2200px;
+  width: 3000px; /* Evitar que se pase de ancho */
+  overflow-x: auto !important; /* Scroll horizontal si es necesario */
+}
+html, body {
+  height: 100% !important;
+  overflow-y: auto !important;
 }
 
 #patrimonio {
@@ -85,6 +90,10 @@
   cursor: pointer;
 }
 
+#btn-add-subcategoria:hover{
+  background-color: #6c1874;
+}
+
 #btn-add:hover {
   background-color: #219150;
 }
@@ -115,4 +124,17 @@ th, td {
 
 th {
   background-color: #f0f0f0;
+}
+
+
+.btn-delete {
+  background: none;
+  border: none;
+  color: red;
+  font-size: 1.2em;
+  cursor: pointer;
+}
+
+.btn-delete:hover {
+  color: darkred;
 }

@@ -59,6 +59,7 @@
             <th>Concepto</th>
             <th>Sub Categoria</th>
             <th>Cantidad (€)</th>
+            <th></th>
           </tr>
         </thead>
         <tbody id="tabla-movimientos">
@@ -140,6 +141,8 @@ function renderFinanzas() {
     const lista = document.getElementById(`lista-${categoria}`);
     lista.innerHTML = '';
 
+    finanzas[categoria].sort((a, b) => b.cantidad - a.cantidad);
+
     finanzas[categoria].forEach(item => {
       total += item.cantidad;
       const li = document.createElement('li');
@@ -163,13 +166,12 @@ function initMovimientos() {
           categoria: item.categoria,
           concepto: item.concepto,
           cantidad: item.cantidad,
-          nombre_sub_categoria: item.nombre_sub_categoria, // este campo es necesario
-          isDeleted: item.isDeleted // asegúrate de incluirlo
+          nombre_sub_categoria: item.nombre_sub_categoria,
+          isDeleted: item.isDeleted
         });
       });
       renderMovimientos();
 
-      // ✅ Ahora sí: procesamos finanzas y renderizamos
       finanzas = procesarMovimientos(movimientos);
       renderFinanzas();
     })
@@ -215,6 +217,13 @@ function renderMovimientos() {
       <td style="color: ${mov.cantidad < 0 ? 'red' : 'green'}">
         ${Number(mov.cantidad).toLocaleString()} €
       </td>
+      <td>
+        <button 
+          class="btn-delete" 
+          onclick="registro_delete(event,${mov.id})">
+          🗑️
+        </button>
+      </td>
     `;
     tbody.appendChild(tr);
   });
@@ -224,6 +233,46 @@ document.addEventListener('DOMContentLoaded', async () => {
   await initSubcategorias();
   await initMovimientos();
 });
+
+
+  async function registro_delete(event,id) {
+
+      event.preventDefault();
+
+      const result = await Swal.fire({
+          title: "¿Estás seguro?",
+          text: "¡Esto es irreversible!",
+          icon: "warning",
+          showCancelButton: true,
+          confirmButtonColor: "#E63757",
+          cancelButtonColor: "#748194",
+          cancelButtonText: "Cancelar",
+          confirmButtonText: "Sí, eliminar"
+      });
+
+      if (result.isConfirmed) {
+
+          borrarMovimiento(id);
+
+      }
+
+  }
+
+function borrarMovimiento(id) {
+
+  fetch(`./controllers/borrar_movimiento.php?id=${id}`)
+    .then(res => res.json())
+    .then(data => {
+      if (data.success) {
+        // Quitamos el movimiento del array
+        movimientos.splice(movimientos.findIndex(m => m.id == id), 1);
+        window.location.reload();
+      } else {
+        alert('Error al borrar el movimiento');
+      }
+    })
+    .catch(err => console.error('Error:', err));
+}
 
 
 function nuevoMovimiento() {

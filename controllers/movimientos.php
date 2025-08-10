@@ -10,7 +10,8 @@ FROM
 INNER JOIN 
     sub_categorias ON movimientos.sub_categoria = sub_categorias.id
 WHERE 
-    movimientos.isDeleted = 0;";
+    movimientos.isDeleted = 0
+ORDER BY fecha DESC";
     
 $result = $conn->query($sql);
 
