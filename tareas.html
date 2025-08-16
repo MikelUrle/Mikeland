@@ -236,7 +236,6 @@
                         // Marcamos localmente como borrada también
                         const tarea = tareas.find(t => t.id_tarea == id_tarea);
                         if (tarea) tarea.isDeleted = 1;
-                        console.log("hola");
                         window.location.reload();
                     } else {
                         Swal.fire('Error', 'No se pudo borrar la tarea', 'error');
