@@ -12,7 +12,7 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet"
     integrity="sha384-LN+7fdVzj6u52u30Kp6M/trliBMCMKTyK833zpbD+pXdCLuTusPj697FH4R/5mcr" crossorigin="anonymous">
 
-      <style>
+  <style>
     .doc-container {
       display: flex;
       height: 90vh;
@@ -50,7 +50,7 @@
       padding: 10px;
     }
 
-    #doc-textarea {
+    #doc-texto {
       width: 100%;
       height: 100%;
       resize: none;
@@ -58,6 +58,22 @@
       border-radius: 8px;
       padding: 10px;
       font-family: monospace;
+    }
+
+    .doc-list .btn-nuevo {
+      background-color: #4caf50;
+      /* Azul Bootstrap */
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 0.8rem;
+      padding: 4px 10px;
+      transition: background 0.2s ease-in-out;
+    }
+
+    .doc-list .btn-nuevo:hover {
+      background-color: #217424;
+      /* Azul un poco más oscuro */
     }
   </style>
 </head>
@@ -70,15 +86,12 @@
     <div class="doc-container">
       <!-- Zona de texto/documento -->
       <div class="doc-content">
-        <textarea id="doc-textarea" placeholder="Selecciona un documento para ver su contenido..."></textarea>
+        <textarea id="doc-texto" placeholder="Selecciona un documento para ver su contenido..."></textarea>
       </div>
 
       <!-- Listado de documentos -->
       <div class="doc-list">
-        <h5>Documentos</h5>
-        <button onclick="abrirDocumento('manual')">Manual de Usuario</button>
-        <button onclick="abrirDocumento('guia')">Guía de Instalación</button>
-        <button onclick="abrirDocumento('faq')">Preguntas Frecuentes</button>
+
       </div>
     </div>
   </div>
@@ -93,21 +106,208 @@
         .then(res => res.text())
         .then(html => {
           document.getElementById('sidebar').innerHTML = html;
+          cargarDocumentos();
         });
 
     });
 
-        // Documentos hardcodeados de prueba
-    const documentos = {
-      manual: "Bienvenido al Manual de Usuario.\n\nAquí puedes escribir instrucciones detalladas...",
-      guia: "Guía de Instalación:\n1. Descarga el paquete.\n2. Ejecuta el instalador.\n3. Sigue los pasos...",
-      faq: "Preguntas Frecuentes:\n\nP: ¿Cómo se usa?\nR: Selecciona un documento y edítalo..."
-    };
+    let documentos = [];
+    let documentoActual = null;
 
-    function abrirDocumento(doc) {
-      document.getElementById("doc-textarea").value = documentos[doc] || "Documento vacío...";
+    async function cargarDocumentos() {
+      try {
+        const res = await fetch('./controllers/documentacion/lista_docs.php');
+        documentos = await res.json();
+        renderDocumentos();
+      } catch (err) {
+        console.error('Error al cargar documentos:', err);
+      }
     }
 
+    function renderDocumentos() {
+      const contenedor = document.querySelector('.doc-list');
+      contenedor.innerHTML = `
+        <div class="d-flex justify-content-between align-items-center mb-2">
+            <h5 class="m-0">Documentos</h5>
+            <div>
+                <button class="btn-nuevo" onclick="crearDocumento()">+ Nuevo</button>
+                <button id="btn-guardar" class="btn-guardar" onclick="guardarDocumento()">💾 Guardar</button>
+            </div>
+        </div>
+    `;
+
+      documentos.forEach(doc => {
+        const wrapper = document.createElement('div');
+        wrapper.classList.add('d-flex', 'justify-content-between', 'align-items-center', 'mb-1');
+
+        const btn = document.createElement('button');
+        btn.textContent = doc.nombre;
+        btn.style.width = '1000%';
+        btn.style.padding = '10px 15px';
+        btn.style.fontSize = '16px';
+        btn.style.borderRadius = '6px';
+        btn.style.border = '1px solid #ccc';
+        btn.style.backgroundColor = '#f0f0f0';
+        btn.style.cursor = 'pointer';
+        btn.style.textAlign = 'left';
+        btn.onclick = () => abrirDocumento(doc.id);
+
+        const btnBorrar = document.createElement('button');
+        btnBorrar.innerHTML = '🗑️';
+        btnBorrar.classList.add('btn-borrar-doc');
+        btnBorrar.onclick = () => borrarDocumento(doc.id);
+
+        wrapper.appendChild(btn);
+        wrapper.appendChild(btnBorrar);
+        contenedor.appendChild(wrapper);
+      });
+    }
+
+    function abrirDocumento(id) {
+      const doc = documentos.find(d => d.id == id);
+      if (!doc) return;
+
+      documentoActual = doc.id; // lo guardamos
+      document.getElementById('doc-texto').value = doc.texto;
+
+      // mostramos el botón de guardar
+      document.getElementById('btn-guardar').style.display = 'inline-block';
+    }
+
+
+    async function guardarDocumento() {
+      if (!documentoActual) return;
+
+      const nuevoTexto = document.getElementById('doc-texto').value;
+
+      const formData = new FormData();
+      formData.append('id', documentoActual);
+      formData.append('texto', nuevoTexto);
+
+      try {
+        const res = await fetch('./controllers/documentacion/guardar_doc.php', {
+          method: 'POST',
+          body: formData
+        });
+        const data = await res.json();
+
+        if (data.success) {
+          Swal.fire({
+            icon: 'success',
+            title: '¡Guardado!',
+            text: 'Documento guardado con éxito ✅',
+            confirmButtonColor: '#3085d6'
+          });
+        } else {
+          Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'No se pudo guardar el documento'
+          });
+        }
+        cargarDocumentos();
+
+      } catch (err) {
+        console.error('Error al guardar documento:', err);
+        Swal.fire({
+          icon: 'error',
+          title: 'Error',
+          text: 'Error en la conexión con el servidor'
+        });
+      }
+    }
+
+    async function crearDocumento() {
+      const { value: nombre } = await Swal.fire({
+        title: 'Nuevo Documento',
+        input: 'text',
+        inputLabel: 'Nombre del documento',
+        inputPlaceholder: 'Escribe un nombre...',
+        showCancelButton: true,
+        confirmButtonText: 'Crear',
+        cancelButtonText: 'Cancelar',
+        inputValidator: (value) => {
+          if (!value) {
+            return '¡El nombre no puede estar vacío!';
+          }
+        }
+      });
+
+      if (nombre) {
+        try {
+          const formData = new FormData();
+          formData.append('nombre', nombre);
+
+          const res = await fetch('./controllers/documentacion/crear_doc.php', {
+            method: 'POST',
+            body: formData
+          });
+
+          const data = await res.json();
+
+          if (data.success) {
+            Swal.fire({
+              icon: 'success',
+              title: 'Documento creado',
+              text: 'El documento se ha creado con éxito ✅'
+            });
+
+            // Recargar lista de documentos
+            await cargarDocumentos();
+          } else {
+            Swal.fire({
+              icon: 'error',
+              title: 'Error',
+              text: 'No se pudo crear el documento'
+            });
+          }
+        } catch (err) {
+          console.error('Error al crear documento:', err);
+          Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'Error en la conexión con el servidor'
+          });
+        }
+      }
+    }
+
+
+    async function borrarDocumento(id) {
+      const confirm = await Swal.fire({
+        title: '¿Eliminar documento?',
+        text: 'Se marcará como borrado y desaparecerá de la lista.',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Sí, borrar',
+        cancelButtonText: 'Cancelar',
+        confirmButtonColor: '#d33'
+      });
+
+      if (confirm.isConfirmed) {
+        try {
+          const formData = new FormData();
+          formData.append('id', id);
+
+          const res = await fetch('./controllers/documentacion/borrar_doc.php', {
+            method: 'POST',
+            body: formData
+          });
+
+          const data = await res.json();
+
+          if (data.success) {
+            Swal.fire('Borrado', 'El documento fue eliminado ✅', 'success');
+            await cargarDocumentos();
+          } else {
+            Swal.fire('Error', 'No se pudo borrar el documento', 'error');
+          }
+        } catch (err) {
+          console.error('Error al borrar documento:', err);
+          Swal.fire('Error', 'Error en la conexión con el servidor', 'error');
+        }
+      }
+    }
 
 
   </script>
