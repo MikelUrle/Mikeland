@@ -210,7 +210,7 @@ function renderMovimientos() {
   movimientos.forEach(mov => {
     const tr = document.createElement('tr');
     tr.innerHTML = `
-      <td>${mov.fecha}</td>
+      <td>${mov.fecha.split(' ')[0]}</td>
       <td>${categorias[mov.categoria] || 'Desconocida'}</td>
       <td>${mov.concepto}</td>
       <td>${mov.nombre_sub_categoria || '-'}</td>

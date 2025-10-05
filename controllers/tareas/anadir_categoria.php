@@ -18,7 +18,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         echo json_encode(['success' => true]);
     } else {
         http_response_code(500);
-        echo json_encode(['success' => false, 'error' => 'Error al insertar']);
+        echo json_encode(['success' => false, 'error' => $conn->error]);
     }
 
     $conn->close();

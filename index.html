@@ -52,7 +52,8 @@
               id: item.id,
               title: item.nombre,
               start: item.fecha,
-              color: item.color.toLowerCase()
+              color: item.color.toLowerCase(),
+              allDay: true
             }));
 
             const calendar = new FullCalendar.Calendar(calendarEl, {
