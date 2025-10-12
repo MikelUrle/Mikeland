@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Mikeland</title>
+  <link rel="stylesheet" href="./styles/menu.css">
+  <link rel="stylesheet" href="./styles/index.css">
+  <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/main.min.css" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11" defer></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet"
+    integrity="sha384-LN+7fdVzj6u52u30Kp6M/trliBMCMKTyK833zpbD+pXdCLuTusPj697FH4R/5mcr" crossorigin="anonymous">
+<style>
+    .category-section h6 {
+  font-weight: 600;
+  color: #555;
+  margin-bottom: 0.5rem;
+  border-bottom: 1px solid #ddd;
+  padding-bottom: 0.25rem;
+}
+
+.category-section ul {
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  background-color: #fff;
+}
+
+.category-section {
+  background-color: #fafafa;
+  padding: 0.5rem;
+  border-radius: 10px;
+}
+</style>
+</head>
+
+<body>
+
+
+  <div id="sidebar"></div>
+
+  <div class="main">
+    <div class="recipe-container container mt-4">
+      <div class="row">
+        <!-- Lista de recetas -->
+<!-- Lista de recetas con categorías -->
+<div class="col-md-4">
+  <h4 class="mb-3">Mis Recetas</h4>
+
+  <div class="category-section mb-3">
+    <h6>🍲 Primeros platos</h6>
+    <ul id="recipe-list-primeros" class="list-group mb-3"></ul>
+  </div>
+
+  <div class="category-section mb-3">
+    <h6>🍖 Segundos platos</h6>
+    <ul id="recipe-list-segundos" class="list-group mb-3"></ul>
+  </div>
+
+  <div class="category-section mb-3">
+    <h6>🍰 Postres</h6>
+    <ul id="recipe-list-postres" class="list-group mb-3"></ul>
+  </div>
+
+  <div class="category-section mb-3">
+    <h6>🗂️ Genéricas</h6>
+    <ul id="recipe-list-genericas" class="list-group mb-3"></ul>
+  </div>
+
+  <button id="add-recipe" class="btn btn-primary mt-3 w-100">➕ Nueva receta</button>
+</div>
+
+        <!-- Vista / Edición de la receta -->
+        <div class="col-md-8">
+          <div class="card shadow-sm p-3">
+            <h3 id="recipe-title" class="mb-3">Selecciona o crea una receta</h3>
+
+            <!-- Foto -->
+            <div class="text-center mb-3">
+              <img style="height: 200px; width: 300px;" id="recipe-image" src="./Imagenes/Receta Genérica.jpg" 
+                   alt="Foto de receta" class="img-fluid rounded mb-2">
+              <input type="file" id="upload-image" class="form-control" accept="image/*">
+            </div>
+
+            <!-- Ingredientes -->
+            <h5>🧂 Ingredientes</h5>
+            <textarea id="recipe-ingredients" class="form-control mb-3" rows="5"
+              placeholder="Lista de ingredientes..."></textarea>
+
+            <!-- Pasos -->
+            <h5>👨‍🍳 Preparación</h5>
+            <textarea id="recipe-steps" class="form-control mb-3" rows="8"
+              placeholder="Escribe los pasos de la receta..."></textarea>
+
+            <div class="d-flex justify-content-end gap-2">
+              <button id="save-recipe" class="btn btn-success">💾 Guardar</button>
+              <button id="delete-recipe" class="btn btn-danger">🗑️ Eliminar</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js"
+    integrity="sha384-ndDqU0Gzau9qJ1lfW4pNLlhNTkCfHzAVBReH9diLvGRem5+R9g2FzA8ZGN954O5Q"
+    crossorigin="anonymous"></script>
+<script defer>
+  document.addEventListener('DOMContentLoaded', () => {
+    fetch('./menu.html')
+      .then(res => res.text())
+      .then(html => {
+        document.getElementById('sidebar').innerHTML = html;
+      });
+
+    // Elementos
+    const lists = {
+      primeros: document.getElementById('recipe-list-primeros'),
+      segundos: document.getElementById('recipe-list-segundos'),
+      postres: document.getElementById('recipe-list-postres'),
+      genericas: document.getElementById('recipe-list-genericas')
+    };
+
+    const addBtn = document.getElementById('add-recipe');
+    const saveBtn = document.getElementById('save-recipe');
+    const deleteBtn = document.getElementById('delete-recipe');
+    const imgInput = document.getElementById('upload-image');
+
+    const titleEl = document.getElementById('recipe-title');
+    const imgEl = document.getElementById('recipe-image');
+    const ingEl = document.getElementById('recipe-ingredients');
+    const stepsEl = document.getElementById('recipe-steps');
+
+    let recipes = JSON.parse(localStorage.getItem('recipes') || '[]');
+    let selectedIndex = null;
+
+    const renderList = () => {
+      Object.values(lists).forEach(list => list.innerHTML = '');
+      recipes.forEach((r, i) => {
+        const li = document.createElement('li');
+        li.className = 'list-group-item list-group-item-action';
+        li.textContent = r.title || 'Sin título';
+        li.onclick = () => selectRecipe(i);
+        lists[r.category || 'genericas'].appendChild(li);
+      });
+    };
+
+    const selectRecipe = (index) => {
+      selectedIndex = index;
+      const r = recipes[index];
+      titleEl.textContent = r.title;
+      imgEl.src = r.image || 'https://via.placeholder.com/400x250?text=Sin+foto';
+      ingEl.value = r.ingredients;
+      stepsEl.value = r.steps;
+      categorySelect.value = r.category || 'genericas';
+    };
+
+    // Crear nueva receta
+    addBtn.onclick = () => {
+      const newRecipe = { title: 'Nueva receta', image: '', ingredients: '', steps: '', category: 'genericas' };
+      recipes.push(newRecipe);
+      selectedIndex = recipes.length - 1;
+      localStorage.setItem('recipes', JSON.stringify(recipes));
+      renderList();
+      selectRecipe(selectedIndex);
+    };
+
+    saveBtn.onclick = () => {
+      if (selectedIndex === null) return alert('Selecciona una receta');
+      const r = recipes[selectedIndex];
+      r.title = titleEl.textContent;
+      r.image = imgEl.src;
+      r.ingredients = ingEl.value;
+      r.steps = stepsEl.value;
+      r.category = categorySelect.value;
+      localStorage.setItem('recipes', JSON.stringify(recipes));
+      renderList();
+      alert('Receta guardada ✅');
+    };
+
+    deleteBtn.onclick = () => {
+      if (selectedIndex === null) return alert('Selecciona una receta');
+      if (confirm('¿Eliminar esta receta?')) {
+        recipes.splice(selectedIndex, 1);
+        localStorage.setItem('recipes', JSON.stringify(recipes));
+        selectedIndex = null;
+        titleEl.textContent = 'Selecciona o crea una receta';
+        imgEl.src = 'https://via.placeholder.com/400x250?text=Sin+foto';
+        ingEl.value = '';
+        stepsEl.value = '';
+        renderList();
+      }
+    };
+
+    imgInput.onchange = (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = () => {
+          imgEl.src = reader.result;
+        };
+        reader.readAsDataURL(file);
+      }
+    };
+
+    // Añadimos selector de categoría en la zona de edición
+    const card = document.querySelector('.card');
+    const categoryHTML = `
+      <div class="mb-3">
+        <label for="category" class="form-label">Categoría</label>
+        <select id="category" class="form-select">
+          <option value="primeros">🍲 Primer plato</option>
+          <option value="segundos">🍖 Segundo plato</option>
+          <option value="postres">🍰 Postre</option>
+          <option value="genericas">🗂️ Genérica</option>
+        </select>
+      </div>`;
+    card.insertAdjacentHTML('afterbegin', categoryHTML);
+
+    const categorySelect = document.getElementById('category');
+
+    renderList();
+  });
+</script>
+
+
+</body>
+
+</html>
