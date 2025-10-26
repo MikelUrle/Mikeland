@@ -89,23 +89,25 @@
         }
 
 
-.lista-categoria li {
-    cursor: pointer;
-    padding: 10px;          /* área clicable más grande */
-    margin-bottom: 5px;
-    border-radius: 5px;
-    transition: background-color 0.2s;
-    display: flex;
-    justify-content: space-between; /* para que el texto y el botón estén separados */
-    align-items: center;
-}
+        .lista-categoria li {
+            cursor: pointer;
+            padding: 10px;
+            /* área clicable más grande */
+            margin-bottom: 5px;
+            border-radius: 5px;
+            transition: background-color 0.2s;
+            display: flex;
+            justify-content: space-between;
+            /* para que el texto y el botón estén separados */
+            align-items: center;
+        }
 
-.tarea-completada {
-    background-color: #4caf50; /* fondo verde completo */
-    color: white;              /* texto blanco */
-}
-
-
+        .tarea-completada {
+            background-color: #4caf50;
+            /* fondo verde completo */
+            color: white;
+            /* texto blanco */
+        }
     </style>
 </head>
 
@@ -324,66 +326,66 @@
 
 
 
-function renderTareas() {
-    listaTareasDiv.innerHTML = '';
+        function renderTareas() {
+            listaTareasDiv.innerHTML = '';
 
-    categorias.forEach(cat => {
-        const tareasCat = tareas.filter(t => t.nombre_categoria === cat);
+            categorias.forEach(cat => {
+                const tareasCat = tareas.filter(t => t.nombre_categoria === cat);
 
-        if (tareasCat.length > 0) {
-            const h3 = document.createElement('h3');
-            h3.classList.add('categoria-titulo');
-            h3.textContent = cat;
-            listaTareasDiv.appendChild(h3);
+                if (tareasCat.length > 0) {
+                    const h3 = document.createElement('h3');
+                    h3.classList.add('categoria-titulo');
+                    h3.textContent = cat;
+                    listaTareasDiv.appendChild(h3);
 
-            const ul = document.createElement('ul');
-            ul.classList.add('lista-categoria');
+                    const ul = document.createElement('ul');
+                    ul.classList.add('lista-categoria');
 
-tareasCat.forEach(tarea => {
-    const li = document.createElement('li');
-    li.className = 'tarea-item'; // clase para estilo
+                    tareasCat.forEach(tarea => {
+                        const li = document.createElement('li');
+                        li.className = 'tarea-item'; // clase para estilo
 
-    // Aplicamos color de fondo según estado
-    if (tarea.estado == 1) {
-        li.classList.add('tarea-completada');
-    }
+                        // Aplicamos color de fondo según estado
+                        if (tarea.estado == 1) {
+                            li.classList.add('tarea-completada');
+                        }
 
-    // Evento de doble clic sobre todo el li
-    li.addEventListener('dblclick', () => toggleCompletarTarea(tarea.id_tarea));
+                        // Evento de doble clic sobre todo el li
+                        li.addEventListener('dblclick', () => toggleCompletarTarea(tarea.id_tarea));
 
-    // Texto de la tarea
-    const span = document.createElement('span');
-    span.textContent = tarea.texto;
+                        // Texto de la tarea
+                        const span = document.createElement('span');
+                        span.textContent = tarea.texto;
 
-    // Botón de borrar
-    const btnBorrar = document.createElement('button');
-    btnBorrar.className = 'btn-borrar';
-    btnBorrar.textContent = 'X';
-    btnBorrar.addEventListener('click', e => {
-        e.stopPropagation(); // evitar que se active el dblclick del li
-        borrarTarea(tarea.id_tarea);
-    });
+                        // Botón de borrar
+                        const btnBorrar = document.createElement('button');
+                        btnBorrar.className = 'btn-borrar';
+                        btnBorrar.textContent = 'X';
+                        btnBorrar.addEventListener('click', e => {
+                            e.stopPropagation(); // evitar que se active el dblclick del li
+                            borrarTarea(tarea.id_tarea);
+                        });
 
-    li.appendChild(span);
-    li.appendChild(btnBorrar);
-    ul.appendChild(li);
-});
+                        li.appendChild(span);
+                        li.appendChild(btnBorrar);
+                        ul.appendChild(li);
+                    });
 
-            listaTareasDiv.appendChild(ul);
+                    listaTareasDiv.appendChild(ul);
+                }
+            });
         }
-    });
-}
 
-function toggleCompletarTarea(id_tarea) {
-    const tarea = tareas.find(t => t.id_tarea == id_tarea);
-    if (!tarea) return;
+        function toggleCompletarTarea(id_tarea) {
+            const tarea = tareas.find(t => t.id_tarea == id_tarea);
+            if (!tarea) return;
 
-    tarea.estado = tarea.estado == 1 ? 0 : 1; // alterna entre 0 y 1
-    renderTareas();
+            tarea.estado = tarea.estado == 1 ? 0 : 1; // alterna entre 0 y 1
+            renderTareas();
 
-    // Aquí puedes añadir un fetch a tu PHP para actualizar el estado en la DB
-    fetch(`./controllers/tareas/completar_tarea.php?id=${id_tarea}`, { method: 'POST' });
-}
+            // Aquí puedes añadir un fetch a tu PHP para actualizar el estado en la DB
+            fetch(`./controllers/tareas/completar_tarea.php?id=${id_tarea}`, { method: 'POST' });
+        }
 
 
         function toggleCompletar(id_tarea) {
