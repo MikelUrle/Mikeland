@@ -1,7 +1,7 @@
 <?php
 $host = "127.0.0.1";
 $usuario = "root";
-$contrasena = "XxU3eOxX12?";
+$contrasena = "";
 $base_de_datos = "db_mikeland";
 
 $conn = new mysqli($host, $usuario, $contrasena, $base_de_datos);
